@@ -1,0 +1,17 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs/
+/packages
+/**/bin/
+/**/obj/
+/**/.ntvs_analysis.dat
+*.user
+/**/Publish
+# You should have this in normal web projects to prevent
+# accidental additions of "PublishProfiles" to the repository
+#/**/PublishProfiles
+/deploy/app/
+*.zip
+/**/App_Data

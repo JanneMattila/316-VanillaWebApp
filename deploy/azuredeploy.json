@@ -1,0 +1,103 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appServicePlanSkuName": {
+      "type": "string",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "App Service Plan's Pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "appServicePlanInstances": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 1,
+      "metadata": {
+        "description": "Describes App Service Plan's instance count"
+      }
+    }
+  },
+  "variables": {
+    "appPlanName": "appServicePlan",
+    "appName": "[concat('vanillawebApp', uniqueString(resourceGroup().id))]",
+    "appInsightsName": "appInsights"
+  },
+  "resources": [
+    {
+      "name": "[variables('appInsightsName')]",
+      "type": "Microsoft.Insights/components",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-08-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "Component appInsights"
+      },
+      "properties": {
+        "applicationId": "[resourceId('Microsoft.Web/sites', variables('appName'))]"
+      }
+    },
+    {
+      "name": "[variables('appPlanName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [],
+      "tags": {
+        "tier": "web"
+      },
+      "sku": {
+        "name": "[parameters('appServicePlanSkuName')]",
+        "capacity": "[parameters('appServicePlanInstances')]"
+      }
+    },
+    {
+      "name": "[variables('appName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/serverfarms', variables('appPlanName'))]"
+      ],
+      "tags": { },
+      "properties": {
+        "name": "[variables('appName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('appPlanName'))]",
+        "siteConfig": {
+          "AlwaysOn": true,
+          "appSettings": [
+            {
+              "name": "APPLICATION_INSIGHTS_IKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', variables('appInsightsName')), '2014-04-01').InstrumentationKey]"
+            }
+          ],
+          "connectionStrings": [
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "webAppName": {
+      "type": "string",
+      "value": "[variables('appName')]"
+    },
+    "webAppUri": {
+      "type": "string",
+      "value": "[concat('http://',reference(resourceId('Microsoft.Web/sites', variables('appName'))).hostNames[0])]"
+    }
+  }
+}
